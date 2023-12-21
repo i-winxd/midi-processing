@@ -88,7 +88,7 @@ This program preserves track names, channels, instruments, and tempo changes. An
 
 FL Studio normally likes it when each track ties to a channel, as if there was a non-injective (not 1-1) mapping from each track to a channel.
 
-- Each Track is an item you can see on the channel rack.
+- Each Track is an item you can see on the channel rack. The name you give to the MIDI Out (literally use "Rename" in FL Studio) is the track name.
 - Channels are tied to a track, based on the channel you set for MIDI out
 
 You can also export a MIDI file directly from a channel. If you do so, the colors you assigned to the notes will be preserved, each distinct color getting its own track.
