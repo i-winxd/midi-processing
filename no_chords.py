@@ -1,5 +1,8 @@
-from midi_processor import MidiRepresentation, Note, process_and_save_midi
 import math
+from typing import Annotated
+from helpers.midi_processor import MidiRepresentation, Note, process_and_save_midi
+from helpers.utils import create_argparse_from_function
+
 
 
 def group_by_custom_equals(lst: list[Note]) -> list[list[Note]]:
@@ -34,5 +37,13 @@ def no_chords(m: MidiRepresentation) -> None:
         track.notes = safe_notes
 
 
+def run(source: Annotated[str, "Path to MIDI file to modify"], 
+        destination: Annotated[str, "Path to output MIDI file"]) -> None:
+    """Remove all but one note from chords.
+    Only applies to the same channel and track.
+    Keep the highest one."""
+    process_and_save_midi(source, destination, no_chords)
+
+
 if __name__ == '__main__':
-    process_and_save_midi("midfiles/ChordTest1.mid", "output2.mid", no_chords)
+    create_argparse_from_function(run)

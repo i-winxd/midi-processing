@@ -22,20 +22,12 @@ Then, you may run `main.py` below, or use the API in `midi_processor.py` if you 
 
 ## Command line usage
 
-```
-usage: main.py [-h] input output filter
-```
+All the python files are their own filters and can exist as standalone programs. Run `python <program.py> -h` to see what they do.
 
-- `input` is the input MIDI file path this program will read. It must end with `.mid`
-- `output` is the path to the output file this program will write. It should not exist unless you want to have an existing file overwritten. It must end with `.mid`
-- `filter`: The filter to select. Running `main.py -h` will show you the available filters.
-
-Use `-h` to figure out what filters are needed. If you've made your own filters, add them to `FILTERS`, key being the command line argument and value being the filter function. 
-
-Example:
+Sample usage - assumes `input.mid` exists.
 
 ```
-python main.py input.mid output.mid no_filter
+python identity.py input.mid output.mid
 ```
 
 ## API
@@ -78,17 +70,40 @@ Just read the class declarations in `midi_processor.py`
 
 *Preserved* means if you put a midi file into this program without filtering it and put the output back in FL Studio, all of its information should be retained. This program does not preserve MIDI files perfectly; read the warnings below.
 
-This program may not work well for overlapping notes in the same pitch (two notes with the same **pitch, channel, and track** are playing at the same time). Realistically, that would be impossible to do in real life.
+### Preserved
 
-**Slide notes and portamentos are not preserved.**
+- Tempo and tempo changes
+- Track names
+- Channel numbers
+- Instrument mappings
 
-This program preserves track names, channels, instruments, and tempo changes. Any esoteric feature in MIDIs may not be preserved.
+### Readable
+
+- Time signatures
+
+### Not Preserved
+
+- Slide notes, portamentos
 
 ## Exporting MIDIs from FL Studio
 
 FL Studio normally likes it when each track ties to a channel, as if there was a non-injective (not 1-1) mapping from each track to a channel.
 
-- Each Track is an item you can see on the channel rack. The name you give to the MIDI Out (literally use "Rename" in FL Studio) is the track name.
+- Each Track is an item you can see on the channel rack.
 - Channels are tied to a track, based on the channel you set for MIDI out
 
 You can also export a MIDI file directly from a channel. If you do so, the colors you assigned to the notes will be preserved, each distinct color getting its own track.
+
+## Current Filters
+
+- `identity`: Does nothing. Just like multiplying a value by 1, or a vector by the identity matrix.
+- `no_chords`: Remove all but one note from all chords.
+    Only applies to the same channel and track.
+    Keep the highest one.
+- `tempo_integrator`: Remove all tempo changes. Forces the tempo to 60.
+    Adjust note duration and beat durations to accommodate the removal of tempo so the output MIDI file still sounds the same.
+
+## To Dos
+
+- 6/8 to 4/4 (Hard)
+- Chord identifier (Very hard)
