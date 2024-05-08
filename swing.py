@@ -2,7 +2,7 @@ import math
 from typing import Annotated
 from helpers.midi_processor import MidiRepresentation, process_and_save_midi
 from helpers.utils import create_argparse_from_function
-from functools import partial
+
 
 def to_swing(beat_count: float, mult: float) -> float:
     """Return the swing variant of a beat's count.
@@ -20,12 +20,20 @@ def to_swing(beat_count: float, mult: float) -> float:
     return new_beat / mult
 
 
+def to_swing_duration(beat: float, duration: float, mult: float) -> float:
+    # run the swing algorithm on the finish time
+    finish_time = beat + duration
+    finish_time_swing = to_swing(finish_time, mult)  # this is a monotonic transformation
+    start_time_swing = to_swing(beat, mult)
+    # assert finish_time_swing - start_time_swing >= 0.0
+    return finish_time_swing - start_time_swing
+
+
 def swing_midi(midi_representation: MidiRepresentation, mult: float) -> None:
     for _, track in midi_representation.tracks.items():
         for i in range(len(track.notes)):
-            track.notes[i].beat = to_swing(track.notes[i].beat, mult)
-            track.notes[i].duration = track.notes[i].duration
-        track.clamp_notes()
+            track.notes[i].beat, track.notes[i].duration = (to_swing(track.notes[i].beat, mult),
+                                                            to_swing_duration(track.notes[i].beat, track.notes[i].duration, mult))
 
 
 multiplicative_factor_str = """Adjusts what's considered a beat. 
@@ -36,8 +44,7 @@ Decimal values are acceptable.
 Defaults to 1."""
 
 
-
-def run(source: Annotated[str, "Path to MIDI file to modify"], 
+def run(source: Annotated[str, "Path to MIDI file to modify"],
         destination: Annotated[str, "Path to output MIDI file"],
         mult: Annotated[float, multiplicative_factor_str] = 1) -> None:
     """Swings a non-swing MIDI throughout. We assume that the midi's time sig
@@ -47,4 +54,3 @@ def run(source: Annotated[str, "Path to MIDI file to modify"],
 
 if __name__ == '__main__':
     create_argparse_from_function(run)
-

@@ -79,7 +79,7 @@ class Track(BaseModel):
             cur_note = self.notes[i]
             if cur_note.note in previous_note_dict:
                 prev_note = previous_note_dict[cur_note.note]
-                required_duration = min(prev_note.duration, max(cur_note.beat - prev_note.beat - 0.01, 0))
+                required_duration = min(prev_note.duration, max(cur_note.beat - prev_note.beat - 0.1, 0))
                 prev_note.duration = required_duration
             previous_note_dict[cur_note.note] = cur_note
 
@@ -313,7 +313,11 @@ def representation_to_midi_file(midi_representation: MidiRepresentation) -> mido
     """Convert a MidiRepresentation instance to a mido.MidiFile instance that can be
     exported to a new Midi file.
     NOTHING IN midi_representation NEEDS TO BE SORTED
+    midi_representaton may be mutated!
     """
+    # for _, t in midi_representation.tracks.items():
+    #     t.clamp_notes()
+
     midi_file = mido.MidiFile()
     ticks_per_beat = _DEFAULT_TICKS_PER_BEAT
     midi_file.ticks_per_beat = ticks_per_beat
@@ -348,7 +352,8 @@ def representation_to_midi_file(midi_representation: MidiRepresentation) -> mido
                                                      program=track_instrument)
                 midi_track.append(track_channel_message)
 
-        for note in track.notes:
+        sorted_notes = sorted(track.notes, key=lambda s: s.beat)
+        for note in sorted_notes:
             midi_events.append(MidiEvent(note=note, event_time=note.beat, on=True))
             midi_events.append(MidiEvent(note=note, event_time=note.beat + note.duration, on=False))
         midi_events.sort(key=lambda t: t.event_time)

@@ -20,11 +20,21 @@ def from_swing(beat_count: float, mult: float) -> float:
     return new_beat / mult
 
 
+def from_swing_duration(beat: float, duration: float, mult: float) -> float:
+    # run the swing algorithm on the finish time
+    finish_time = beat + duration
+    finish_time_swing = from_swing(finish_time, mult)  # this is a monotonic transformation
+    start_time_swing = from_swing(beat, mult)
+    # assert finish_time_swing - start_time_swing >= 0.0
+    return finish_time_swing - start_time_swing
+
+
 def swing_midi(midi_representation: MidiRepresentation, mult: float) -> None:
     for _, track in midi_representation.tracks.items():
         for i in range(len(track.notes)):
-            track.notes[i].beat = from_swing(track.notes[i].beat, mult)
-        track.clamp_notes()
+            track.notes[i].beat, track.notes[i].duration = (from_swing(track.notes[i].beat, mult),
+                                                            from_swing_duration(track.notes[i].beat,
+                                                                                track.notes[i].duration, mult))
 
 
 multiplicative_factor_str = """Adjusts what's considered a beat. 
