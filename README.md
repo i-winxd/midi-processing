@@ -22,6 +22,8 @@ Then, you may run `main.py` below, or use the API in `midi_processor.py` if you 
 
 ## Command line usage
 
+The Python files in the current directory are meant to be run, and act as example filters I've made.
+
 All the python files are their own filters and can exist as standalone programs. Run `python <program.py> -h` to see what they do.
 
 Sample usage - assumes `input.mid` exists.
@@ -31,6 +33,8 @@ python identity.py input.mid output.mid
 ```
 
 ## API
+
+In `helpers/midi_processor.py`
 
 - ``midi_to_representation(midi_file: mido.MidiFile) -> MidiRepresentation:``
 - ``representation_to_midi_file(midi_representation: MidiRepresentation) -> mido.MidiFile:``
@@ -60,7 +64,7 @@ process_and_save_midi("input.mid", "output.mid", midi_processor)
 
 ## Object Representation
 
-Just read the class declarations in `midi_processor.py`
+Just read the class declarations in `helpers/midi_processor.py`
 
 ## Caution!
 
