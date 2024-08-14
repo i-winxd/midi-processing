@@ -4,7 +4,7 @@ A Python module meant for processing MIDI files in a programmer-friendly way.
 
 ## Installation and Setup
 
-Make sure you have Python 3.8 or later installed. You have it installed if you can type `python` in the command prompt and have the console show up.
+Make sure you have Python 3.10 or later installed. You have it installed if you can type `python` in the command prompt and have the console show up.
 
 https://www.python.org/downloads/
 
@@ -13,8 +13,10 @@ Make sure to add Python to your path.
 Then, run this command:
 
 ```
-python -m pip install -r requirements.txt
+py -m pip install -r requirements.txt
 ```
+
+**Use `py` on windows, `python3` on MacOS and Linux.**
 
 Then, you may run `main.py` below, or use the API in `midi_processor.py` if you already have programming experience.
 
