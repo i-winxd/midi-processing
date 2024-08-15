@@ -2,6 +2,7 @@ import argparse
 import inspect
 from typing import Any, Callable, get_args, get_origin, Union
 
+
 def create_argparse_from_function(func: Callable[..., Any]) -> None:
     """
     Creates an ArgumentParser from a function and uses it to parse command-line arguments.
@@ -32,7 +33,6 @@ def create_argparse_from_function(func: Callable[..., Any]) -> None:
         # Unwrap Optional[T] to T
         if get_origin(param_type) is Union:
             param_type = next(t for t in get_args(param_type) if t is not type(None))
-
 
         if param.default == inspect.Parameter.empty:
             parser.add_argument(name, type=param_type, help=description)

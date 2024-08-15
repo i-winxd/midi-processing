@@ -1,7 +1,7 @@
 import math
 from typing import Annotated, Optional
-from helpers.midi_processor import MidiRepresentation, TempoChange, Note, process_and_save_midi
-from helpers.utils import create_argparse_from_function
+from midi_processor import MidiRepresentation, TempoChange, Note, process_and_save_midi
+from midi_processor.utils import create_argparse_from_function
 
 
 def spb(tempo: float) -> float:
@@ -30,13 +30,13 @@ def prevent_overlapping_notes(__notes_argument: list[Note]) -> list[Note]:
         if i < len(notes) - 1:
             next_note_idx = arg_first(i + 1, notes, note)
             if next_note_idx != -1:
-                new_notes.append(note.model_copy(update={
+                new_notes.append(note.copy(update={
                     "duration": min(note.duration, notes[next_note_idx].beat - note.beat - 0.00001)
                 }))
             else:
-                new_notes.append(note.model_copy())
+                new_notes.append(note.copy())
         else:
-            new_notes.append(note.model_copy())
+            new_notes.append(note.copy())
 
     return new_notes
 
@@ -58,9 +58,9 @@ def augment_note_list(__tempo_change_argument: list[TempoChange], __notes_argume
         #   previous_bpm  beat_loc    cur_tempo_change
         while j < len(notes) and notes[j].beat < tempo_change.beat:
             export_notes.append(
-                notes[j].model_copy(update={"beat": offset_this_many_seconds +
-                                                    (notes[j].beat - count_from_this_beat) *
-                                                    spb(previous_bpm),
+                notes[j].copy(update={"beat": offset_this_many_seconds +
+                                              (notes[j].beat - count_from_this_beat) *
+                                              spb(previous_bpm),
                                             "duration": notes[j].duration * spb(previous_bpm)})
             )
             j += 1

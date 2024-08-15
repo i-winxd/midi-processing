@@ -1,7 +1,7 @@
 import math
 from typing import Annotated
-from helpers.midi_processor import MidiRepresentation, process_and_save_midi
-from helpers.utils import create_argparse_from_function
+from midi_processor import MidiRepresentation, process_and_save_midi
+from midi_processor.utils import create_argparse_from_function
 
 
 def to_swing(beat_count: float, mult: float) -> float:

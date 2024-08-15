@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 import math
-from typing import Callable
+from dataclasses import dataclass
+from typing import Callable, Any, Optional, TypeVar
 from collections import Counter
-from pydantic import BaseModel
 import mido
 import logging
+from copy import copy, deepcopy
 
 EPSILON = 1e-7
 
@@ -37,9 +36,28 @@ logging.basicConfig(level=logging.DEBUG,
 
 _DEFAULT_TICKS_PER_BEAT = 96
 _DEFAULT_BPM = 120
+_CO = TypeVar("_CO", bound="Copyable")
 
 
-class Note(BaseModel):
+class Copyable:
+    def copy(self: _CO, update: Optional[dict[str, Any]] = None, deep: bool = False) -> _CO:
+        copy_of = deepcopy(self) if deep else copy(self)
+        if update:
+            for attr, value in update.items():
+                setattr(copy_of, attr, value)
+        return copy_of
+
+
+@dataclass
+class Note(Copyable):
+    """FIELDS:
+
+    - channel: int  # counts from 0. FL counts from 1.
+    - note: int  # 60: C5, 61: C#5
+    - velocity: int  # 0 to 100
+    - beat: float  # beat count where this plays from the start of the file
+    - duration: float  # in beats
+    """
     channel: int  # counts from 0. FL counts from 1.
     note: int  # 60: C5, 61: C#5
     velocity: int  # 0 to 100
@@ -47,10 +65,14 @@ class Note(BaseModel):
     duration: float  # in beats
 
 
-class TimeSignature(BaseModel):
-    """Has fields
-    numerator
-    denominator"""
+@dataclass
+class TimeSignature(Copyable):
+    """FIELDS:
+
+    - numerator: int
+    - denominator: int
+    - beat: float
+    """
     numerator: int
     denominator: int
     beat: float
@@ -68,7 +90,14 @@ class TimeSignature(BaseModel):
         return self.denominator / 4
 
 
-class Track(BaseModel):
+@dataclass
+class Track(Copyable):
+    """Fields:
+
+    - notes: list[Note]
+    - track_name: str
+    """
+
     notes: list[Note]
     track_name: str
 
@@ -83,15 +112,15 @@ class Track(BaseModel):
                 prev_note.duration = required_duration
             previous_note_dict[cur_note.note] = cur_note
 
-    def slice(self, b: float, e: float) -> Track:
+    def slice(self, b: float, e: float) -> "Track":
         """Return a copy of self with only notes that start in [b, e).
         All notes in the returned list will have their beat start subtracted by b"""
         notes_list = [
-            note.model_copy(update={"beat": max(0.0, note.beat - b)})
+            note.copy(update={"beat": max(0.0, note.beat - b)})
             for note in self.notes if
             # b <= note.beat < e
             sandwiched(b, note.beat, e)]
-        return self.model_copy(update={"notes": notes_list})
+        return self.copy(update={"notes": notes_list})
 
     def offset(self, beats: float) -> None:
         """ -> """
@@ -102,15 +131,15 @@ class Track(BaseModel):
         for note in self.notes:
             note.beat *= factor
 
-    def slice_with_time_signature(self, b: float, e: float, time_sig: TimeSignature) -> Track:
+    def slice_with_time_signature(self, b: float, e: float, time_sig: TimeSignature) -> "Track":
         """Return a copy of self with only notes that start in [b, e), and adjust according to time signature.
         All notes in the returned list will have their beat start subtracted by b"""
         notes_list = [
-            note.model_copy(update={"beat": max(0.0, note.beat - b) * time_sig.get_absolute_tempo_squish_factor()})
+            note.copy(update={"beat": max(0.0, note.beat - b) * time_sig.get_absolute_tempo_squish_factor()})
             for note in self.notes if
             # b <= note.beat < e
             sandwiched(b, note.beat, e)]
-        return self.model_copy(update={"notes": notes_list})
+        return self.copy(update={"notes": notes_list})
 
     def most_used_channel(self) -> int:
         """Return the most common channel in the notes
@@ -122,21 +151,40 @@ class Track(BaseModel):
         return most_common
 
 
-class TempoChange(BaseModel):
+@dataclass
+class TempoChange(Copyable):
+    """Fields:
+
+    - beat: float
+    - new_bpm: float
+    """
     beat: float
     new_bpm: float
 
 
-class MidiEvent(BaseModel):
+@dataclass
+class MidiEvent(Copyable):
+    """Field:
+
+    - note: Note
+    - event_time: float
+    - on: bool
+    """
+
     note: Note
     event_time: float
     on: bool
 
 
-class Bar(BaseModel):
-    """This class provides some functions
-    as way to abstract out some values that we might
-    need from it."""
+@dataclass
+class Bar(Copyable):
+    """FIELDS:
+
+    - tracks: dict[int, Track]
+    - time_signature: TimeSignature
+    - tempo_changes: list[TempoChange]
+    - starting_tempo: float
+    """
     tracks: dict[int, Track]
     time_signature: TimeSignature
     tempo_changes: list[TempoChange]
@@ -147,21 +195,30 @@ def generate_4_4_time_sig() -> TimeSignature:
     return TimeSignature(numerator=4, denominator=4, beat=0)
 
 
-class BarMidiRepresentation(BaseModel):
+@dataclass
+class BarMidiRepresentation(Copyable):
     """A variant of MidiRepresentation that splits all notes into their own
-    bars. Each bar is independent of each other."""
+    bars. Each bar is independent of each other.
+
+    FIELDS:
+
+    - bars: list[Bar]
+    - channel_instrument_map: dict[int, int]
+    - bpm_changes: list[TempoChange]
+    - time_signature_changes: list[TimeSignature]
+    """
     bars: list[Bar]
     channel_instrument_map: dict[int, int]
     bpm_changes: list[TempoChange]
     time_signature_changes: list[TimeSignature]
 
-    def to_regular_midi_representation(self) -> MidiRepresentation:
+    def to_regular_midi_representation(self) -> "MidiRepresentation":
         aggregate_tracks: dict[int, list[Track]] = {}
 
         last_absolute_beat = 0.0
         for b in self.bars:
             for i, track in b.tracks.items():
-                track2 = track.model_copy(deep=True)
+                track2 = track.copy(deep=True)
                 track2.scale(1 / b.time_signature.get_absolute_tempo_squish_factor())
                 track2.offset(last_absolute_beat)
                 if i not in aggregate_tracks:
@@ -183,7 +240,7 @@ class BarMidiRepresentation(BaseModel):
         )
 
 
-def generate_bar_midi_representation(mr: MidiRepresentation) -> BarMidiRepresentation:
+def generate_bar_midi_representation(mr: "MidiRepresentation") -> BarMidiRepresentation:
     return BarMidiRepresentation(
         bars=mr.generate_bars(),
         channel_instrument_map=mr.channel_instrument_map,
@@ -192,10 +249,16 @@ def generate_bar_midi_representation(mr: MidiRepresentation) -> BarMidiRepresent
     )
 
 
-class MidiRepresentation(BaseModel):
-    """track_names maps track numbers to track names.
+@dataclass
+class MidiRepresentation(Copyable):
+    """FIELDS:
+
+    - tracks: dict[int, Track]  # maps track numbers to track names
+    - channel_instrument_map: dict[int, int]
+    - bpm_changes: list[TempoChange]
+    - time_signature_changes: list[TimeSignature]
     """
-    tracks: dict[int, Track]
+    tracks: dict[int, Track]  # maps track numbers to track names
     channel_instrument_map: dict[int, int]
     bpm_changes: list[TempoChange]
     time_signature_changes: list[TimeSignature]
@@ -254,7 +317,7 @@ class MidiRepresentation(BaseModel):
             tempo_changes: list[TempoChange] = []
             first_tempo, last_tempo = clamp_sorted(tempos_as_beats, b, e)
             for i in range(first_tempo, last_tempo):
-                new_tempo_change = local_tempo_changes[i].model_copy(
+                new_tempo_change = local_tempo_changes[i].copy(
                     update={"beat": max(0.0, local_tempo_changes[i].beat - b) * time_sig_changes[
                         time_sig_index].get_absolute_tempo_squish_factor()}, deep=True)
                 tempo_changes.append(new_tempo_change)
@@ -527,17 +590,3 @@ def process_and_save_midi_mut(md_path: str, md_opt: str,
     midi_representation_2 = fn(midi_representation)
     midi_file_2 = representation_to_midi_file(midi_representation_2)
     midi_file_2.save(md_opt)
-
-# FOR DEBUGGING PURPOSES
-# def _main() -> None:
-#     midi_file = mido.MidiFile(_MD_FILE_PATH)
-#     midi_representation = midi_to_representation(midi_file)
-#     print(midi_representation.get_starting_bpm())
-#     print(midi_representation.channel_instrument_map)
-#     print(midi_representation.bpm_changes)
-#     midi_file_2 = representation_to_midi_file(midi_representation)
-#     midi_file_2.save(_MD_OUT_PATH)
-#
-#
-# if __name__ == '__main__':
-#     _main()

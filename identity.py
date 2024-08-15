@@ -1,6 +1,6 @@
 from typing import Annotated
-from helpers.midi_processor import MidiRepresentation, process_and_save_midi
-from helpers.utils import create_argparse_from_function
+from midi_processor import MidiRepresentation, process_and_save_midi
+from midi_processor.utils import create_argparse_from_function
 
 
 def no_filter(midi_representation: MidiRepresentation) -> None:
