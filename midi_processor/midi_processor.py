@@ -399,7 +399,11 @@ def representation_to_midi_file(midi_representation: MidiRepresentation) -> mido
     midi_file.tracks.append(tempo_track)
     # TEMPO TRACK END
 
-    for track_no, track in midi_representation.tracks.items():
+    # this feels unnecessrary but i do not trust anything else
+    midi_tracks_pack = [(k, v) for k, v in midi_representation.tracks.items()]
+    midi_tracks_pack.sort(key=lambda p: p[0])
+
+    for track_no, track in midi_tracks_pack:
         midi_events: list[MidiEvent] = []
         midi_track = mido.MidiTrack()
 
