@@ -389,12 +389,16 @@ def representation_to_midi_file(midi_representation: MidiRepresentation) -> mido
     tempo_track = mido.MidiTrack()
     tempo_track_name_message = mido.MetaMessage('track_name', name="Tempo changes")
     tempo_track.append(tempo_track_name_message)
-
-    accumulated_ticks = 0
+    
+    # this is a bug fix. whatever this is, you should probably push it
+    previous_tc = 0
     for bpm_change in sorted(midi_representation.bpm_changes, key=lambda s: s.beat):
         tempo_in_microseconds = int(60000000 / bpm_change.new_bpm)
-        accumulated_ticks += int(bpm_change.beat * ticks_per_beat)
-        tempo_message = mido.MetaMessage('set_tempo', tempo=tempo_in_microseconds, time=accumulated_ticks)
+        # accumulated_ticks += int(bpm_change.beat * ticks_per_beat)
+        tc_time_now = int(bpm_change.beat * ticks_per_beat)
+        time_delta = tc_time_now - previous_tc
+        previous_tc = tc_time_now
+        tempo_message = mido.MetaMessage('set_tempo', tempo=tempo_in_microseconds, time=time_delta)
         tempo_track.append(tempo_message)
     midi_file.tracks.append(tempo_track)
     # TEMPO TRACK END
