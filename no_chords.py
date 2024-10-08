@@ -26,13 +26,12 @@ def no_chords(m: MidiRepresentation) -> None:
     Only applies to the same channel and track.
     Keep the highest one.
     """
-    for track_no in m.tracks:
-        track = m.tracks[track_no]
+    for track in m.tracks:
         notes = track.notes
         safe_notes: list[Note] = []
         equals_group = group_by_custom_equals(notes)
         for note_set in equals_group:
-            safe_notes.append(max(note_set, key=lambda ns: ns.note))
+            safe_notes.append(max(note_set, key=lambda ns: ns.key))
         track.notes = safe_notes
 
 

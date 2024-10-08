@@ -2,7 +2,6 @@ import math
 from typing import Annotated
 from midi_processor import MidiRepresentation, process_and_save_midi
 from midi_processor.utils import create_argparse_from_function
-from functools import partial
 
 
 def from_swing(beat_count: float, mult: float) -> float:
@@ -30,7 +29,7 @@ def from_swing_duration(beat: float, duration: float, mult: float) -> float:
 
 
 def swing_midi(midi_representation: MidiRepresentation, mult: float) -> None:
-    for _, track in midi_representation.tracks.items():
+    for track in midi_representation.tracks:
         for i in range(len(track.notes)):
             track.notes[i].beat, track.notes[i].duration = (from_swing(track.notes[i].beat, mult),
                                                             from_swing_duration(track.notes[i].beat,

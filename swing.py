@@ -30,7 +30,7 @@ def to_swing_duration(beat: float, duration: float, mult: float) -> float:
 
 
 def swing_midi(midi_representation: MidiRepresentation, mult: float) -> None:
-    for _, track in midi_representation.tracks.items():
+    for track in midi_representation.tracks:
         for i in range(len(track.notes)):
             track.notes[i].beat, track.notes[i].duration = (to_swing(track.notes[i].beat, mult),
                                                             to_swing_duration(track.notes[i].beat, track.notes[i].duration, mult))

@@ -2,13 +2,13 @@
 
 A `MidiRepresentation` class has these fields:
 
-- `tracks`: A dictionary, `dict[int, Track]`
+- `tracks`: A list, `list[Track]`
   - Keys are `int`s being the track number
   - Values are `Track` instances, having these fields:
     - `notes`: a **list** of `Note` instances (`list[Note]`), each note being
       - `channel` (`int`, counts from 0, adjust conventions as FL counts from 1)
-      - `note` (`int`, `60=C5`)
-      - `velocity` (`int`, 0 to 100)
+      - `key` (`int`, `60=C5`)
+      - `vel` (`int`, 0 to 100)
       - `beat` (`float`)
       - `duration` (`float`)
     - `track_name` (`str`), the name of the track, which in FL Studio is the name of what you set in the channel rack
@@ -21,5 +21,5 @@ A `MidiRepresentation` class has these fields:
 - `time_signature_changes`, a list of `TimeSignature` instances. For songs without time signature changes, it usually
   has one at beat 0 representing 4/4. A `TimeSignatureChange` consists of:
   - `numerator` (`int`)
-  - `denominator` (`int`)
+  - `denominator_log2` (`int`)
   - `beat` (`float`)

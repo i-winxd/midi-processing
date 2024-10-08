@@ -12,7 +12,7 @@ def arg_first(__start: int, __list: list[Note], cur_note: Note) -> int:
     for i in range(__start, len(__list)):
         loop_note = __list[i]
         if all([
-            loop_note.note == cur_note.note,
+            loop_note.key == cur_note.key,
             loop_note.channel == cur_note.channel,
         ]):
             return i
@@ -104,7 +104,7 @@ def naive_tempo_change_to_seconds(__tempo_change_argument: list[TempoChange], be
 def tempo_integrator(m: MidiRepresentation) -> None:
     """Remove all tempo changes. Forces the tempo to 60.
     Adjust note duration and beat durations to accommodate the removal of tempo."""
-    for i, track in m.tracks.items():
+    for track in m.tracks:
         track.notes = augment_note_list(m.bpm_changes, track.notes)
     m.bpm_changes = [
         TempoChange(beat=0, new_bpm=60)
