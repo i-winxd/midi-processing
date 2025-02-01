@@ -201,7 +201,7 @@ class MidiRepresentation(Copyable):
         for i, track in enumerate(self.tracks):
             if len(track.notes) == 0:
                 to_pop.append(i)
-        for i in to_pop:
+        for i in reversed(to_pop):
             self.tracks.pop(i)
 
     def get_song_length(self) -> int:
